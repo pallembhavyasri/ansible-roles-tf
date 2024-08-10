@@ -1,0 +1,8 @@
+- name: Configure backend server using roles
+  become: yes
+  hosts: all
+  connection: local 
+  vars_files:
+  - "variables-{{ env }}.yaml"
+  roles:
+  - Backend

@@ -1,0 +1,82 @@
+- name: Disable the default nodejs
+  ansible.builtin.command: dnf module disable nodejs -y #for disable and enable we don't have default modules to use hence we use command module
+
+- name: Enable the nodejs:20
+  ansible.builtin.command: dnf module enable nodejs:20 -y
+
+# since we need to install mysql also let us keep loops in the dnf module
+- name: Install the nodejs & Mysql
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: installed
+  loop:
+    - mysql
+    - nodejs
+
+- name: Craete user #Ansible modules by default handle the idempotency hence once user is creater for next tun it will identify the user is created
+  ansible.builtin.user:
+    name: expense
+
+# #we are using the common role
+# - name: run the pre-requesites
+#   ansible.builtin.import_role:
+#     name: common #role name where tasks are located
+#     tasks_from: pre-req 
+
+
+- name: Create the app directory
+  ansible.builtin.file:
+    path: /app # we need to send the path where we need to create the directory.
+    state: directory # if we pass directory then only it will create a directory , touch , file are other options, if we give absent it will del
+
+- name: Download the backend code
+  ansible.builtin.get_url:
+    url: https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip #url to code dowload
+    dest: /tmp/backend.zip #where to store the code
+
+- name: Unzip the code
+  ansible.builtin.unarchive:
+    src: /tmp/backend.zip # by te above command already te code is in the ansible removte src
+    dest: /app
+    remote_src: yes # ansible first checks in remotes server if there is present it will move to dest
+
+- name: Install npm dependencies
+  ansible.builtin.command: npm install
+  args:
+    chdir: /app # we will use the args with chdir to choose in which directory we need to run. here npm need to run in app dire
+
+- name: copy backend service
+  ansible.builtin.template: # we used the templates to control the variables inside the backend service which are kept in templates
+    src: Backend.service.j2
+    dest: /etc/systemd/system/backend.service
+
+# now to need to load the schema so we need to install the PyMySQL dependensies for backend ansible to connect the DB
+- name: Install python mysql dependencies
+  ansible.builtin.pip:
+    name:
+      - PyMySQL
+      - cryptography
+    executable: pip3.9 #we need to excute the current version of th epython in our ansible
+
+- name: Import data into mysql
+  community.mysql.mysql_db:
+    login_user: "{{ login_user }}"
+    login_password: "{{ mysql_root_password }}"
+    login_host: "{{ login_host }}"
+    target: /app/schema/backend.sql
+    state: import
+    name: all # we need to give name=all when the state is import
+
+- name: Daemon reload
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+  # after above command we can check in backend server for the data load with the below command
+  # mysql -h db.bhavya.store -u root -pExpenseApp@1
+
+# start & enable the service
+- name: start & Enable the backend service
+  ansible.builtin.service:
+    name: backend
+    state: started
+    enabled: yes

@@ -1,0 +1,15 @@
+- name: Delete the previous code
+  ansible.builtin.file:
+    path: "{{ app_location }}"
+    state: absent 
+
+- name: Create the directory 
+  ansible.builtin.file:
+    path: "{{ app_location }}"
+    state: directory 
+
+- name: Download the backend & extract code
+  ansible.builtin.get_url:
+    src: https://expense-builds.s3.us-east-1.amazonaws.com/expense-{{ component }}-v2.zip #url to code dowload
+    dest: "{{ app_location }}" #where to store the code
+    remote_src: yes # ansible first checks in remotes server if there is present it will move to dest

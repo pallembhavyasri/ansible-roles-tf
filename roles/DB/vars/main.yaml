@@ -1,0 +1,4 @@
+login_user: root
+login_host: db.bhavya.store
+mysql_root_password: ExpenseApp@1
+component: DB

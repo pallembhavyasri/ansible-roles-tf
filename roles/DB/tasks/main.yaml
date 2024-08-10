@@ -1,0 +1,37 @@
+- name: Install mysql server 
+  ansible.builtin.dnf:
+    name: mysql-server 
+    state: installed
+
+- name: Start & Enable the server
+  ansible.builtin.service:
+    name: mysqld 
+    state: started
+    enabled: yes   
+
+#since ansible is developed by py so inorder to connect to mysql ansible need to install the python dependencies also
+- name: Install python mysql dependencies
+  ansible.builtin.pip: 
+    name:
+    - PyMySQL
+    - cryptography
+    executable: pip3.9 #we need to excute the current version of th epython in our ansible
+
+# Checking the root password is already set up or not 
+
+- name: Check DB connection
+  community.mysql.mysql_info: 
+    login_user: "{{ login_user }}"
+    login_password: "{{ mysql_root_password }}"
+    login_host: "{{ login_host }}"
+    filter: version 
+  ignore_errors: true #while this excutes for 1st time there will be not any root pswd setup hence we are making to ignore the errors
+  register: mysql_connection_output # register is keyword to store the output of a ansible command
+
+- name: print the DB connection output
+  ansible.builtin.debug:
+    msg: "Print the DB connection O/P {{ mysql_connection_output }}"
+
+- name: Set the root password
+  ansible.builtin.command: "mysql_secure_installation --set-root-pass {{ mysql_root_password }}"
+  when: mysql_connection_output.failed is true # the above command will run when the DB connection is failed 

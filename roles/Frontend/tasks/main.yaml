@@ -1,0 +1,46 @@
+- name: Install nginx
+  ansible.builtin.dnf:
+    name: nginx
+    state: installed 
+
+- name: Start & Enable the nginx 
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes 
+
+# #we are using the common role
+# - name: run the pre-requesites
+#   ansible.builtin.import_role:
+#     name: common #role name where tasks are located
+#     tasks_from: pre-req 
+
+- name: delete the default content 
+  ansible.builtin.file:
+    path: /usr/share/nginx/html
+    state: absent #this will remove the html folder completely since it deleted we will cretae the html folder again and import our code
+
+- name: create the html directory 
+  ansible.builtin.file:
+    path: /usr/share/nginx/html
+    state: directory
+
+- name: download & extract the code
+  ansible.builtin.unarchive:
+    src: https://expense-builds.s3.us-east-1.amazonaws.com/expense-frontend-v2.zip
+    dest: /usr/share/nginx/html
+    remote_src: yes
+
+- name: Copy the backend Configuration
+  ansible.builtin.template:
+    src: Frontend.service.j2 # give the file name of where we connected with backend server
+    dest: /etc/nginx/default.d/expense.conf
+  # notify:
+  # - Restart the nginx 
+
+# #the below resatrt is required when there is a configuration change only if not not required so to notify the config change
+#  we use the handlers(notify)
+- name: Restart the nginx 
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: restarted 
