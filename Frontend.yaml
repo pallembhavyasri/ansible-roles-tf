@@ -1,5 +1,8 @@
-- name: Configure frontend server using roles
+- name: Configure backend server using roles
   become: yes
-  hosts: web
+  hosts: all
+  connection: local 
+  vars_files:
+  - "variables-{{ env }}.yaml"
   roles:
   - Frontend

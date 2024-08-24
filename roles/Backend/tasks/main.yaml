@@ -50,6 +50,15 @@
     src: Backend.service.j2
     dest: /etc/systemd/system/backend.service
 
+- name: Daemon reload
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable the backend service
+  ansible.builtin.service:
+    name: backend
+    enabled: yes
+
 # now to need to load the schema so we need to install the PyMySQL dependensies for backend ansible to connect the DB
 - name: Install python mysql dependencies
   ansible.builtin.pip:
@@ -67,9 +76,6 @@
     state: import
     name: all # we need to give name=all when the state is import
 
-- name: Daemon reload
-  ansible.builtin.systemd_service:
-    daemon_reload: true
 
   # after above command we can check in backend server for the data load with the below command
   # mysql -h db.bhavya.store -u root -pExpenseApp@1
