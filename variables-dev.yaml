@@ -3,3 +3,4 @@ login_host: db-dev.bhavya.store
 mysql_root_password: ExpenseApp1
 DB_HOST: db-dev.bhavya.store
 backend_API_URL: backend.app-dev.bhavya.store #it should hit the load balancer 
+nexus_url: nexus.bhavya.store:8081

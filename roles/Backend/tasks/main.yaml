@@ -29,10 +29,18 @@
     path: /app # we need to send the path where we need to create the directory.
     state: directory # if we pass directory then only it will create a directory , touch , file are other options, if we give absent it will del
 
-- name: Download the backend code
+#code is downloaded from S3 
+# - name: Download the backend code
+#   ansible.builtin.get_url:
+#     url: https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip #url to code dowload
+#     dest: /tmp/backend.zip #where to store the code
+
+# code is downloaded from nexus artifact 
+- name: Download the artifact from nexus 
   ansible.builtin.get_url:
-    url: https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip #url to code dowload
-    dest: /tmp/backend.zip #where to store the code
+     url:  "http://{{ nexus_url }}/repository/{{ component }}/com/expense/{{ component }}/{{ appVersion }}/{{ component }}-{{ appVersion }}.zip" #url to code dowload
+     dest: /tmp/backend.zip #where to store the code
+
 
 - name: Unzip the code
   ansible.builtin.unarchive:
@@ -40,10 +48,11 @@
     dest: /app
     remote_src: yes # ansible first checks in remotes server if there is present it will move to dest
 
-- name: Install npm dependencies
-  ansible.builtin.command: npm install
-  args:
-    chdir: /app # we will use the args with chdir to choose in which directory we need to run. here npm need to run in app dire
+# commented since we are already installing in jenkins 
+# - name: Install npm dependencies
+#   ansible.builtin.command: npm install
+#   args:
+#     chdir: /app # we will use the args with chdir to choose in which directory we need to run. here npm need to run in app dire
 
 - name: copy backend service
   ansible.builtin.template: # we used the templates to control the variables inside the backend service which are kept in templates
